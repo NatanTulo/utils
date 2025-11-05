@@ -10,10 +10,11 @@ def remove_comments_from_python_code(code):
     tokens_without_comments = [tok for tok in tokens if tok.type != tokenize.COMMENT]
     return tokenize.untokenize(tokens_without_comments)
 
-def remove_comments_from_c_cpp_code(code):
+def remove_comments_from_js_like_code(code):
     result = []
     for line in code.splitlines():
-        line = re.sub(r'//.*$', '', line)
+        # Unikaj usuwania // które są częścią URL-i (http://, https://, ws://, wss://, smb://, ftp://, itp.)
+        line = re.sub(r'(?<!:)//(?!/).*$', '', line)
         result.append(line)
 
     code = '\n'.join(result)
@@ -55,8 +56,8 @@ def process_file(filepath):
 
     if file_ext == '.py':
         new_code = remove_comments_from_python_code(code)
-    elif file_ext in ['.c', '.cpp', '.h', '.hpp']:
-        new_code = remove_comments_from_c_cpp_code(code)
+    elif file_ext in ['.c', '.cpp', '.h', '.hpp', '.ts', '.tsx']:
+        new_code = remove_comments_from_js_like_code(code)
     else:
         print(f"Unsupported file type: {filepath}")
         return
@@ -72,7 +73,7 @@ def process_directory(directory):
             'include', 'lib', 'scripts', 'site-packages']]
         for file in files:
             file_ext = os.path.splitext(file)[1].lower()
-            if file_ext in ['.py', '.c', '.cpp', '.h', '.hpp']:
+            if file_ext in ['.py', '.c', '.cpp', '.h', '.hpp', '.ts', '.tsx']:
                 process_file(os.path.join(root, file))
 
 if __name__ == '__main__':
